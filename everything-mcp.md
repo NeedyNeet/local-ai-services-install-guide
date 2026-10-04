@@ -87,7 +87,7 @@ LocalAddress LocalPort OwningProcess
 
 ## 3. 安装与构建
 
-MCP 服务器是**需要构建、需要长期维护**的代码，不要留在下载目录（临时区会被清理）；本机固定在 `<MCP 根目录>\everything-mcp`（路径规范见 [common-guide.md](common-guide.md#3-路径规范与目录规划本机约定)）。下面命令里的目录请替换成你自己的：
+MCP 服务器是**需要构建、需要长期维护**的代码，不要留在下载目录（临时区会被清理）；本机固定在 `<MCP 根目录>\everything-mcp`（路径规范见 [common-guide.md](common-guide.md#6-路径写法说明)）。下面命令里的目录请替换成你自己的：
 
 ```powershell
 # 1) 取源码（任选其一）
@@ -160,7 +160,7 @@ node probe.js
 
 **探针里的 `EVERYTHING_PORT` 必须和 MCP 配置里的一致**：探针通了而宿主不通 → 问题在宿主配置（命令路径 / env）；探针本身就不通 → 问题在 Everything 或项目构建。
 
-> 探针脚本的通用形态在 [common-guide.md](common-guide.md#54-配置与排错通用提示) 里也记了一份；本机正是用它把「端口不一致」定位出来的。
+> 探针脚本的通用形态在 [common-guide.md](common-guide.md#44-配置与排错通用提示) 里也记了一份；本机正是用它把「端口不一致」定位出来的。
 
 ---
 
@@ -184,11 +184,11 @@ node probe.js
 dsh plugin --profile desktop add @deepseek-ai/dsh-mcp-client@0.2.0-rc.2
 ```
 
-版本对齐的原因、以及 `installed as a plain dependency, not a profile layer` 提示为何正常，见 [common-guide.md](common-guide.md#51-mcp-客户端插件版本必须与宿主主版本对齐)。
+版本对齐的原因、以及 `installed as a plain dependency, not a profile layer` 提示为何正常，见 [common-guide.md](dsh-mcp-setup.md#41-mcp-客户端插件版本必须与-dsh-主版本对齐)。
 
 ### 6.2 加 insert 条目
 
-在 profile 补丁 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml` 末尾追加（**顶层是列表**，不要嵌套；`insert` 条目的机制说明见 [common-guide.md](common-guide.md#22-每加一个-mcp-服务器--加一个-insert-条目)）：
+在 profile 补丁 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml` 末尾追加（**顶层是列表**，不要嵌套；`insert` 条目的机制说明见 [common-guide.md](dsh-mcp-setup.md#2-每加一个-mcp-服务器--加一个-insert-条目)）：
 
 ```yaml
 - insert:
@@ -263,13 +263,13 @@ Found 1 results (showing 1-1) in 56ms
 - [ ] 子进程存在，且 `CommandLine` 指向正确的 node 与 `dist\index.js`
 - [ ] `mcp__everything__everything_search` 能返回真实结果（几十毫秒）
 - [ ] 用项目内作用域（`project_path`）搜一次，确认作用域参数生效
-- [ ] 需要全盘检索时，确认能开启全盘范围并接受越界警告（调用约定见 [AGENTS.md](AGENTS.md)）
+- [ ] 需要全盘检索时，确认能开启全盘范围并接受越界警告
 
 ---
 
 ## 9. 在其他 AI 工具里使用
 
-everything-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#41-标准-mcp-服务器everything-mcp--wiztree-mcp)）。通用接法就是「命令 + 参数 + 环境变量」三件套：
+everything-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#2-mcp-配置的通用形态)）。通用接法就是「命令 + 参数 + 环境变量」三件套：
 
 - `command`：**真实 node 可执行文件的绝对路径** → `<Node 安装目录>\node.exe`
 - `args`：`["D:\\Dev\\MCP\\everything-mcp\\dist\\index.js"]`
@@ -361,7 +361,7 @@ catch { '被占用：可能有 Everything 正在使用它' }
 
 ### 10.3 `command` 必须是真正的 node 可执行文件
 
-本机用 `<Node 安装目录>\node.exe`；**不要**用 DSH 自带的 `resources\runtime\bin\node.cmd`。症状：服务器注册了但一直 `server is disconnected`，且没有任何子进程。完整原因（桥接清洗 `DSH_*` 变量）与通用应对见 [common-guide.md](common-guide.md#52-子进程必须用真正的解释器可执行文件)。
+本机用 `<Node 安装目录>\node.exe`；**不要**用 DSH 自带的 `resources\runtime\bin\node.cmd`。症状：服务器注册了但一直 `server is disconnected`，且没有任何子进程。完整原因（桥接清洗 `DSH_*` 变量）与通用应对见 [common-guide.md](common-guide.md#42-mcp-子进程必须用真正的解释器可执行文件)。
 
 ### 10.4 其他
 
@@ -383,7 +383,7 @@ npm run build
 # 重启生效：改一下 cordis.patch.yml 触发热加载，或重启 DSH
 ```
 
-只更新 MCP 客户端插件时用 `dsh plugin --profile desktop update @deepseek-ai/dsh-mcp-client@<与 DSH 对齐的版本>`；插件与通用的更新/卸载流程见 [common-guide.md](common-guide.md#6-更新与卸载)。
+只更新 MCP 客户端插件时用 `dsh plugin --profile desktop update @deepseek-ai/dsh-mcp-client@<与 DSH 对齐的版本>`；插件与通用的更新/卸载流程见 [common-guide.md](common-guide.md#5-更新与卸载)。
 
 **改端口**（Everything 那边换了端口，或你想换）
 

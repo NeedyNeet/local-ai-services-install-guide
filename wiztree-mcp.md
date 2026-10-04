@@ -40,7 +40,7 @@ WizTree 的 exe 不需要在 PATH 里——由 `WIZTREE_EXE` 显式指定（见 
 
 > 装依赖时如遇网络问题，给 pip 加镜像源（例如 `-i https://pypi.tuna.tsinghua.edu.cn/simple`）。
 
-**关键点**：配置里必须指向 **`.venv\Scripts\python.exe`**，不要指向系统 python，也不要指望"先激活虚拟环境"——MCP 桥接会清洗环境变量（见 [common-guide.md](common-guide.md#52-子进程必须用真正的解释器可执行文件)）。
+**关键点**：配置里必须指向 **`.venv\Scripts\python.exe`**，不要指向系统 python，也不要指望"先激活虚拟环境"——MCP 桥接会清洗环境变量（见 [common-guide.md](common-guide.md#42-mcp-子进程必须用真正的解释器可执行文件)）。
 
 ---
 

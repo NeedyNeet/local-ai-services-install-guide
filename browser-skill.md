@@ -89,7 +89,7 @@ bsk daemon start --foreground
 
 **本机的选择**：把 daemon 起在**非沙箱**环境、且采用自管方式（不带 `--foreground`），这样它独立于任何会话存活。默认 bsk home 是 `%USERPROFILE%\.bsk`；若该目录在沙箱内不可写，需要把 `BSK_HOME` 指到一个**两端都能访问**的目录。
 
-> 为什么不能在沙箱会话里直接跑 `bsk` 客户端（`拒绝访问 (os error 5)`）、以及 `BSK_AUTO_START=0` 的用法，见 [common-guide.md](common-guide.md#53-沙箱会拦截-ipc-命名管道并可能挡住工作区外的读写)。官方沙箱指南：<https://github.com/Tencent/BrowserSkill/blob/main/docs/sandboxed-agents.md>
+> 为什么不能在沙箱会话里直接跑 `bsk` 客户端（`拒绝访问 (os error 5)`）、以及 `BSK_AUTO_START=0` 的用法，见 [common-guide.md](common-guide.md#43-受限沙箱会拦截-ipc-与工作区外读写)。官方沙箱指南：<https://github.com/Tencent/BrowserSkill/blob/main/docs/sandboxed-agents.md>
 
 ---
 
@@ -115,7 +115,7 @@ dsh plugin --profile desktop add @wxg-prc-cpg/browser-skill-dsh-plugin
 
 插件提供 `browser_session` / `browser_page` / `browser_inspect` / `browser_interact` / `browser_tabs` / `browser_assist` 六个原生工具与 `browser-skill` 技能，**不需要**再执行 `bsk install-skill`。
 
-> 本机 profile 是 `desktop`。改完配置的 YAML 校验与备份要求见 [common-guide.md](common-guide.md#54-配置与排错通用提示)。
+> 本机 profile 是 `desktop`。改完配置的 YAML 校验与备份要求见 [common-guide.md](common-guide.md#44-配置与排错通用提示)。
 
 ---
 
@@ -251,7 +251,7 @@ DSH 用插件自带技能，所以 `agent skill matches bundled CLI` 这一项�
 
 ## 11. 更新与卸载
 
-仅列 bsk 相关命令（通用部分见 [common-guide.md](common-guide.md#6-更新与卸载)）。
+仅列 bsk 相关命令（通用部分见 [common-guide.md](common-guide.md#5-更新与卸载)）。
 
 **更新**
 

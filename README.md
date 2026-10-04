@@ -1,99 +1,111 @@
-# dsh-local-services
+# 四套 MCP / 浏览器自动化服务 · 安装集成指南
 
-本机（Windows）为 AI 代理配置的**本地能力服务**文档集合。目标：可以照着重装、也可以直接分享给别人。
+把下面四套能大幅提升 AI 代理干活能力的服务一次装好，**不用一个一个去搜、去踩坑**。
 
-**每套服务一份独立文档**——新增服务只加一个文件，不动其他文档，避免单文件越来越长。
+面向 **Windows**（四套里有三套依赖 Windows 软件）。每一套都独立，**可以只装你要的**。
 
-## 先看这里：哪些是通用的，哪些是 DSH 专用的
-
-本仓库是**「个人配置记录 + 可复用文档」的混合体**。分享或参考时请按下表区分——**不要把 DSH 专用内容当作通用教程**。
-
-| 内容 | 性质 | 别人能用吗 |
-|---|---|---|
-| [project-conventions.md](project-conventions.md) 第 1–5、7、8 节 | 🟢 **通用** | ✅ git 配置、项目规范分层、目录结构、常见坑、决策表——与 DSH 无关，任何 Windows 开发者都适用 |
-| [project-skeleton](../\_templates/project-skeleton/)（骨架与一键脚本） | 🟢 **通用** | ✅ 唯一前置是 git 和 PowerShell |
-| [\_templates/AGENTS.md](../\_templates/AGENTS.md) | 🟢 **通用** | ✅ 只要你用支持 `AGENTS.md` 约定的 AI 工具（Claude Code / Cursor / Codex / DSH 等） |
-| [browser-skill.md](browser-skill.md) 的 CLI 安装、扩展安装、`bsk doctor`、`bsk install-skill` | 🟢 **通用** | ✅ 官方工具本身的用法，与宿主无关 |
-| [bcompare-mcp.md](bcompare-mcp.md) 第 7 节项目对比、8.2 缺陷修复 | 🟢 **通用** | ✅ 上游的真实 bug 与退出码语义，任何人都会踩 |
-| [common-guide.md](common-guide.md) 的 DSH 挂载机制（`cordis.patch.yml` + `@deepseek-ai/dsh-mcp-client`） | 🔵 **DSH 专用** | ⚠️ 只有 DSH 用户用得上；其他宿主见该文第 4 节 |
-| 各服务文档的「接入 DSH」章节 | 🔵 **DSH 专用** | ⚠️ 同上 |
-| `browser_*` / `bsk` / `mcp__*` 工具名、`DSH_*` 变量清洗、沙箱 IPC | 🔵 **DSH 专用** | ⚠️ DSH 实现细节 |
-| 各服务的「安装步骤 / 验证 / 踩坑」 | 🟡 **混合** | 前置条件、构建命令、协议探针验证是通用的；接入配置是 DSH 专用的 |
-| 第 3 节的路径规范与占位符表 | 🟡 **本机约定** | 是「本机的目录习惯」而非通用要求，可改成自己的布局 |
-
-> 路径写法：全仓库用 `<Dev 根目录>`、`<MCP 根目录>` 等占位符表示本机位置，对照表见 [common-guide.md](common-guide.md#31-占位符对照本机实际值)。
-
-## 服务一览
-
-| 服务 | 作用 | 调用形态 | 文档 |
+| 服务 | 它让 AI 能做什么 | 前置软件 | 文档 |
 |---|---|---|---|
-| **browser-skill** | 用你**已登录**的 Chrome / Edge 干活：读页面、点按、填表、截图、调试 | DSH 原生插件（6 个 `browser_*` 工具）；其他 CLI 型宿主用 `bsk install-skill` | [browser-skill.md](browser-skill.md) |
-| **everything-mcp** | voidtools Everything 的全盘 NTFS 索引 → **毫秒级**文件检索 | stdio MCP 服务器，工具名 `mcp__everything__everything_search` | [everything-mcp.md](everything-mcp.md) |
-| **wiztree-mcp** | WizTree 磁盘占用分析：最大文件/文件夹、类型分布、重复文件、树状图 | stdio MCP 服务器，工具名 `mcp__wiztree__*`（17 个） | [wiztree-mcp.md](wiztree-mcp.md) |
-| **bcompare-mcp** | Beyond Compare 文件/文件夹比较、三方合并、目录同步 | stdio MCP 服务器，工具名 `mcp__bcompare__*`（5 个） | [bcompare-mcp.md](bcompare-mcp.md) |
+| **browser-skill** | 在你**已登录**的 Chrome / Edge 里读页面、点按钮、填表单、截图、调试网页 | 无（自带 CLI） | [browser-skill.md](browser-skill.md) |
+| **everything-mcp** | **毫秒级**全盘文件检索（按名字、路径、扩展名、时间、大小） | voidtools Everything | [everything-mcp.md](everything-mcp.md) |
+| **wiztree-mcp** | 分析磁盘占用：最大的文件/文件夹、类型分布、重复文件、树状图 | WizTree | [wiztree-mcp.md](wiztree-mcp.md) |
+| **bcompare-mcp** | 文件/文件夹比较、三方合并、目录同步 | Beyond Compare 5 | [bcompare-mcp.md](bcompare-mcp.md) |
 
-四者互相独立，可单独安装。**除 browser-skill 外，其余三个都是标准 MCP 服务器**，其他宿主也能接（接法见 [common-guide.md](common-guide.md#4-在其他-ai-工具里使用)）。
+没有 IDE 插件、没有云服务、不需要账号——全部在本机运行，用的是你现有的软件与登录状态。
+
+---
+
+## 我应该装哪个
+
+| 你的痛点 | 装这个 |
+|---|---|
+| "AI 帮我找一下那个文件在哪" | everything-mcp |
+| "C 盘满了，看看什么占空间" | wiztree-mcp |
+| "这个改动影响了哪些文件 / 帮我把两个目录同步一下" | bcompare-mcp |
+| "帮我打开这个网页看看 / 帮我填个表单 / 抓一下页面内容" | browser-skill |
+| 全都想要 | 四个都装，它们互不冲突 |
+
+---
+
+## 快速开始（以 everything-mcp 为例）
+
+四套服务的流程是同一套：
+
+```text
+1. 装好前置软件（如 Everything）并确认它能用
+2. 装/构建 MCP 服务器本体
+3. 先用协议探针确认服务器自己能跑通
+4. 填进你的 MCP 客户端配置（三件套：command + args + env）
+5. 在 AI 里调一次工具，确认端到端可用
+```
+
+第 4 步是最容易卡住的地方：**三套 MCP 服务器都是标准的 stdio 服务器，与宿主无关**，填的都是「解释器绝对路径 + 脚本绝对路径 + 环境变量」。
+通用写法（含 Claude Code / Cursor / 其他宿主的示例）见 **[common-guide.md 第 2 节](common-guide.md#2-mcp-配置的通用形态)**。
+
+> 如果你用 **DeepSeek Harness（DSH）**：它不用 `mcpServers` 那种 JSON，而是 YAML 里的 `insert` 条目 —— 见 **[dsh-mcp-setup.md](dsh-mcp-setup.md)**。
+
+---
 
 ## 建议的阅读顺序
 
-1. **[common-guide.md](common-guide.md)** —— 通用部分：环境前置、DSH 挂载 MCP 的机制、跨工具接入方式、**共用踩坑**（首次部署必读，很多坑能一次避开）
-2. 对应服务的独立文档（上面表格里的链接）
-3. **[AGENTS.md](AGENTS.md)** —— 给 AI 代理的调用约定：何时优先用这些服务、调用约束
+1. **[common-guide.md](common-guide.md)** —— 通用部分：环境前置、MCP 配置的通用形态、验证方法、**共用踩坑**（先读这个，很多坑能一次避开）
+2. 你要装的那套服务的独立文档（上面表格里的链接）
+3. DSH 用户额外看 [dsh-mcp-setup.md](dsh-mcp-setup.md)
 
-## 文件
+每份服务文档的结构都一样：
 
-| 文件 | 说明 |
+- 前置条件 → 安装 → **先验证服务器本身** → 环境变量 → 接入宿主（含 DSH 与宿主无关两种） → 工具一览 → **本服务专属注意事项** → 更新与卸载
+
+**"本服务专属注意事项"是最值得看的一节**——那里是真实踩过的坑（端口不一致、路径探测失败、权限不足导致扫描缓慢、退出码语义误解等），每条都写清了症状、原因和解决方式。
+
+---
+
+## 几个跨服务的关键提醒
+
+| 提醒 | 说明 |
 |---|---|
-| [common-guide.md](common-guide.md) | 通用指南：前置条件、DSH MCP 挂载机制、其他 AI 工具接入、**共用注意事项**、更新卸载、路径规范与占位符对照 |
-| [browser-skill.md](browser-skill.md) | browser-skill 安装与使用 |
-| [everything-mcp.md](everything-mcp.md) | everything-mcp 安装与使用 |
-| [wiztree-mcp.md](wiztree-mcp.md) | wiztree-mcp 安装与使用 |
-| [bcompare-mcp.md](bcompare-mcp.md) | bcompare-mcp 安装与使用（含两个候选项目的对比结论、已修复缺陷说明） |
-| [project-conventions.md](project-conventions.md) | **新建项目时看这个**：路径规范、git 配置、项目规范分层、目录结构、提效手段、常见坑（**通用性最高的一份**） |
-| [AGENTS.md](AGENTS.md) | AI 代理工作区约定 |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | 反馈与提交修改的约定（含文档写法约定：路径用占位符、坑要写清症状/原因/解决） |
+| **MCP 子进程要用真正的解释器绝对路径** | 不要依赖 PATH 或"已激活的虚拟环境"——MCP 客户端启动子进程时环境往往是干净的 |
+| **先确认服务端实际情况，再写配置** | 例如 Everything 的 HTTP 端口、WizTree / Beyond Compare 的 exe 位置，MCP 侧的默认值不一定和你的实际一致 |
+| **注册成功 ≠ 连接成功** | 工具名出现了但调用报 `server is disconnected`，通常是子进程没起来 → 先查进程是否存在 |
+| **接入宿主前先用协议探针验证** | 这样出错时能立刻分清是"服务器问题"还是"宿主配置问题" |
+| **路径因机器而异** | 本文档用 `<Node 安装目录>` 这类占位符，替换成你自己的路径 |
+
+---
+
+## 文件说明
+
+| 文件 | 内容 |
+|---|---|
+| [common-guide.md](common-guide.md) | 通用指南：环境前置、MCP 配置通用形态、验证方法、**共用注意事项**、更新卸载 |
+| [browser-skill.md](browser-skill.md) | 浏览器自动化：CLI 安装、扩展安装、daemon、技能安装（9 个宿主）、专属坑 |
+| [everything-mcp.md](everything-mcp.md) | 文件检索：构建、协议探针、端口配置、多份 ini 的判断、专属坑 |
+| [wiztree-mcp.md](wiztree-mcp.md) | 磁盘分析：venv 安装、17 个工具、管理员权限与扫描性能、GUI 协作 |
+| [bcompare-mcp.md](bcompare-mcp.md) | 文件比较：**必须用 `BComp.com` 而非 `BCompare.exe`**、退出码语义、两个候选项目对比、已修复缺陷 |
+| [dsh-mcp-setup.md](dsh-mcp-setup.md) | 🔵 **DSH 专用**：`cordis.patch.yml` 里怎么挂 MCP 服务器、DSH 特有的坑 |
 | [LICENSE](LICENSE) | MIT |
-| [.gitattributes](.gitattributes) | 行尾规则（仓库内统一 LF，脚本保留 CRLF） |
-| [.gitignore](.gitignore) | 文档仓库不进任何构建产物与备份文件 |
-| [README.md](README.md) | 本文件：索引 |
 
-> 注：独立的**通用骨架**不放在本仓库内，而在 `<Dev 根目录>\Github\_templates\`——
-> 它被设计成可单独复制/发布，不依赖本仓库。
+---
 
-## 相关目录
+## 实测环境
 
-| 路径 | 内容 |
+文档里的命令与输出都在以下环境验证过（作为参考，**你的版本可能不同**）：
+
+| 组件 | 版本 |
 |---|---|
-| `<MCP 根目录>\everything-mcp` | everything-mcp 项目本体（TypeScript，需 `npm run build`；运行时用 `dist/index.js`） |
-| `<MCP 根目录>\wiztree-mcp` | wiztree-mcp 项目本体（Python 单文件；运行时用 `.venv\Scripts\python.exe`） |
-| `<MCP 根目录>\beyondcompare-mcp` | bcompare-mcp 项目本体（TypeScript，`bun run build`；运行时用 `dist/index.js`）。**已放弃的候选项目**（同名 Python 版，退出码判断有误）已从磁盘删除，对比结论见 [bcompare-mcp.md](bcompare-mcp.md#7-为什么用这个项目而不用另一个实测对比) |
-| `<便携软件根目录>\` | 便携软件（Everything、WizTree、Beyond Compare） |
-| `%USERPROFILE%\.dsh\profiles\desktop\cordis.patch.yml` | 所有服务的实际生效配置（DSH profile 补丁层） |
-| `%USERPROFILE%\.local\bin\bsk.exe` | bsk CLI |
-| `%USERPROFILE%\.bsk\` | bsk daemon 数据与日志 |
-| `%USERPROFILE%\.bun\bin\bun.exe` | Bun（构建 TypeScript 型 MCP 服务器用） |
-| `<Dev 根目录>\Github\_templates\` | 新项目起步模板（复制 `AGENTS.md` 到项目根目录即继承本机服务约定） |
+| 操作系统 | Windows 10 x64 |
+| Node.js | v24.19.0 |
+| Python | 3.14（venv 内 3.14.6） |
+| browser-skill CLI / 扩展 | 0.3.2 |
+| Chrome / Edge | 154 |
+| Everything | 1.4.1.1026 x64（便携版） |
+| WizTree | 4.31.0.0（便携版） |
+| Beyond Compare | 5（便携版） |
+| MCP 宿主 | DeepSeek Harness 0.2.0-rc.2 |
+| 最后更新 | 2026-10-04 |
 
-## 快速验证（四套服务）
+---
 
-```powershell
-# 1) browser-skill：应无 fail 项（N/A 不算失败）
-& "$env:USERPROFILE\.local\bin\bsk.exe" doctor
+## 反馈
 
-# 2) 所有 MCP 子进程是否都在运行
-Get-CimInstance Win32_Process -Filter "Name='node.exe' OR Name='python.exe'" |
-  Where-Object CommandLine -match 'everything-mcp|wiztree|beyondcompare' |
-  Select-Object ProcessId,CommandLine
-
-# 3) everything-mcp 前置：Everything 的 HTTP 服务应返回 200
-curl.exe -sS "http://127.0.0.1:80/?search=test&json=1&count=3"
-```
-
-再在 AI 会话里各调一次工具（`mcp__everything__everything_search`、`mcp__wiztree__wiztree_info`、`mcp__bcompare__compare_files`、`browser_session list`）即可确认端到端可用。
-
-## 本机实测环境
-
-Windows x64 · Node `v24.19.0` · Bun `1.4.2` · Python `3.14.6`（venv）· DSH `0.2.0-rc.2` ·
-bsk CLI `0.3.2` · 浏览器扩展 `0.3.2`（Chrome / Edge 154）·
-Everything `1.4.1.1026 x64` 便携版（HTTP 端口 **80**）· WizTree `4.31.0.0` 便携版 ·
-Beyond Compare `5` 便携版（BComp.com）· MCP 客户端 `@deepseek-ai/dsh-mcp-client@0.2.0-rc.2`
+发现文档里的**事实错误**（命令写错、退出码含义不对、步骤失效）或**有更好的办法**，欢迎提 issue / PR。
+如果你只是目录结构或版本与我不同，那不算错误——本文档的路径都用占位符表示，替换成你自己的即可。
