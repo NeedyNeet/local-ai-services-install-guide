@@ -1,0 +1,33 @@
+# 行尾与二进制的权威定义。
+#
+# 为什么需要这个文件（而不只依赖 git config core.autocrlf）：
+#   core.autocrlf 是每台机器各自的设置，换台电脑就失效；本文件随仓库走，
+#   对所有人、所有平台都生效。Windows 上不写它，最容易遇到
+#   "整个文件都被改动" 的假 diff。
+#
+# 策略：仓库内统一存 LF。
+
+# 默认：文本文件存 LF，检出时不做转换
+* text=auto eol=lf
+
+# Windows 专用脚本必须 CRLF，否则 cmd.exe / 旧版 PowerShell 可能出错。
+# 这是刻意覆盖上面的 eol=lf —— 本仓库含 PowerShell 脚本。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制：不做任何行尾或 diff 处理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.7z binary
+*.gz binary
+*.pdf binary
+*.exe binary
+*.dll binary
+
+# 文档仓库不需要语言统计（避免 README 里出现莫名的语言占比）
+*.md linguist-documentation
