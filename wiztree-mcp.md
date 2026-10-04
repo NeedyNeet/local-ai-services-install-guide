@@ -2,7 +2,8 @@
 
 一个用 Python 写的 **MCP 服务器**，驱动 [WizTree](https://antibody-software.com/wiztree)（Windows 磁盘空间分析器）来回答"什么占了空间""哪里能清理"。第一次扫描生成 CSV **快照**并缓存，后续所有查询都在快照上流式读取——**不重复扫盘**。
 
-- 项目：`<MCP 根目录>\wiztree-mcp`（单文件 `wiztree_mcp.py`）
+- 项目源码：**[AlessandroBonomo28/wiztree-mcp](https://github.com/AlessandroBonomo28/wiztree-mcp)**（单文件 `wiztree_mcp.py`）
+- 本机装在：`<MCP 根目录>\wiztree-mcp`
 - 本机实测：WizTree `4.31.0.0` 便携版、Python `3.14.6`、服务器 `wiztree-mcp 1.0.0`
 - 工具前缀：`mcp__wiztree__*`（共 17 个）
 
@@ -12,29 +13,34 @@
 
 ## 1. 前置条件
 
-| 项 | 要求 | 本机实测 |
+| 项 | 要求 | 获取方式 / 本机实测 |
 |---|---|---|
 | 操作系统 | Windows（WizTree 是 Windows 程序） | Windows 10 x64 |
-| Python | **≥ 3.10** | `<Python 安装目录>\python.exe`（3.14.7）→ venv 内 3.14.6 |
-| WizTree | 便携版或安装版均可 | 便携版 `<WizTree 安装目录>\WizTree64.exe` |
-| 依赖 | 仅 `mcp>=2.0.0,<3` | 已装入 venv |
+| Python | **≥ 3.10** | `winget install Python.Python.3.14`；本机 `<Python 安装目录>\python.exe`（3.14.7）→ venv 内 3.14.6 |
+| Git | 任意近期版本 | `winget install Git.Git`（用于克隆源码） |
+| WizTree | 便携版或安装版均可 | `winget install AntibodySoftware.WizTree`；本机便携版 `<WizTree 安装目录>\WizTree64.exe` |
+| 依赖 | 仅 `mcp>=2.0.0,<3` | 装进 venv，见第 2 节 |
 
-**Python 的选择很重要**：系统 `python` 可能是 Microsoft Store 的占位 stub（`WindowsApps\python.exe`），不要用它建 venv。用真实安装路径，或用 `py -3.xx` 指定版本。
+> **Python 的选择很重要**：系统 `python` 可能是 Microsoft Store 的占位 stub（`WindowsApps\python.exe`），不要用它建 venv。用真实安装路径，或用 `py -3.xx` 指定版本。
 
-WizTree 的 exe 不需要在 PATH 里——由 `WIZTREE_EXE` 显式指定（见 4）。服务器自己会尝试自动发现（项目在便携版目录内时，或装在 `Program Files` 时），本机是显式指定的。
+WizTree 的 exe 不需要在 PATH 里——由 `WIZTREE_EXE` 显式指定（见第 4 节）。服务器自己会尝试自动发现（项目在便携版目录内时，或装在 `Program Files` 时），本机是显式指定的。
 
 ---
 
 ## 2. 安装
 
 ```powershell
-# 1) 建虚拟环境（本机用真实安装的 Python，不是 Store stub）
+# 1) 克隆源码（不加 -b：该仓库默认分支是 master，写死 main 会失败）
+git clone https://github.com/AlessandroBonomo28/wiztree-mcp.git '<MCP 根目录>\wiztree-mcp'
+cd '<MCP 根目录>\wiztree-mcp'
+
+# 2) 建虚拟环境（本机用真实安装的 Python，不是 Store stub）
 & '<Python 安装目录>\python.exe' -m venv '<MCP 根目录>\wiztree-mcp\.venv'
 
-# 2) 装依赖（requirements.txt 内容：mcp>=2.0.0,<3）
+# 3) 装依赖（requirements.txt 内容：mcp>=2.0.0,<3）
 & '<MCP 根目录>\wiztree-mcp\.venv\Scripts\python.exe' -m pip install -r '<MCP 根目录>\wiztree-mcp\requirements.txt'
 
-# 3) 确认解释器可用
+# 4) 确认解释器可用
 & '<MCP 根目录>\wiztree-mcp\.venv\Scripts\python.exe' --version
 ```
 

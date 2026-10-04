@@ -39,14 +39,18 @@ Beyond Compare 目录下有两个可执行文件，**这个选择决定整套服
 ## 2. 安装
 
 ```powershell
-# 1) 安装 Bun（若尚无）
+# 1) 克隆源码（该仓库默认分支是 main）
+git clone https://github.com/danielsimonjr/beyondcompare-mcp.git '<MCP 根目录>\beyondcompare-mcp'
+
+# 2) 安装 Bun（若尚无）
 irm https://bun.sh/install.ps1 | iex
 # 默认装到 %USERPROFILE%\.bun\bin\bun.exe
+# 或用 winget：winget install Oven-sh.Bun
 
-# 2) 装依赖
+# 3) 装依赖
 & "$env:USERPROFILE\.bun\bin\bun.exe" install --cwd '<MCP 根目录>\beyondcompare-mcp'
 
-# 3) 类型检查 + 构建（产物 dist/index.js）
+# 4) 类型检查 + 构建（产物 dist/index.js）
 & "$env:USERPROFILE\.bun\bin\bun.exe" run --cwd '<MCP 根目录>\beyondcompare-mcp' typecheck
 & "$env:USERPROFILE\.bun\bin\bun.exe" run --cwd '<MCP 根目录>\beyondcompare-mcp' build
 ```

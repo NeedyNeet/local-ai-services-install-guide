@@ -13,19 +13,34 @@
 
 ## 1. 环境前置
 
-| 组件 | 要求 | 说明 |
-|---|---|---|
-| 操作系统 | Windows 10 / Server 2016 以上，x64 | 四套服务里三套依赖 Windows 软件（Everything、WizTree、Beyond Compare）；browser-skill 的 CLI 也仅提供 Windows/macOS/Linux 的 x64·ARM64 |
-| Node.js | ≥ 18（everything-mcp）；≥ 24（bcompare-mcp） | **MCP 子进程必须用真正的 `node.exe`**，见第 4.2 节 |
-| Python | ≥ 3.10（wiztree-mcp） | 用**真实安装**的 Python，不要用 Microsoft Store 的 `python.exe` 占位 stub |
-| 浏览器 | Chromium 内核 **125+** | 仅 browser-skill 需要（Chrome / Edge） |
-| Everything | voidtools Everything，**已建 NTFS 索引** | 仅 everything-mcp 需要，且须**启用 HTTP 服务器** |
-| WizTree | 便携版或安装版均可 | 仅 wiztree-mcp 需要 |
-| Beyond Compare | **5**（项目要求） | 仅 bcompare-mcp 需要；**试用版即可**（见 bcompare-mcp.md 第 8.1 节） |
-| MCP 宿主 | 任何支持 stdio MCP 的客户端 | Claude Code / Cursor / Codex / DSH 等 |
-| 网络 | 能访问 GitHub Releases / npm registry / PyPI | 若下载需要代理，命令行要**显式带 `--proxy`**（`curl.exe` 不读系统代理设置） |
+| 组件 | 要求 | 获取方式 | 说明 |
+|---|---|---|---|
+| 操作系统 | Windows 10 / Server 2016 以上，x64 | — | 四套里三套依赖 Windows 软件（Everything、WizTree、Beyond Compare） |
+| **Git** | 任意近期版本 | `winget install Git.Git` · <https://git-scm.com/download/win> | 用于克隆项目本体 |
+| **Node.js** | ≥ 18（everything-mcp）；≥ 24（bcompare-mcp） | `winget install OpenJS.NodeJS` · <https://nodejs.org/> | **MCP 子进程必须用真正的 `node.exe`**，见第 4.2 节 |
+| **Python** | ≥ 3.10（wiztree-mcp） | `winget install Python.Python.3.14` · <https://www.python.org/downloads/windows/> | 用**真实安装**的 Python，不要用 Microsoft Store 的 `python.exe` 占位 stub |
+| **Bun** | ≥ 1.4.2（bcompare-mcp 构建用） | `winget install Oven-sh.Bun` · <https://bun.sh/> | 只在构建时需要，运行时用 Node |
+| 浏览器 | Chromium 内核 **125+** | 系统一般已有 | 仅 browser-skill 需要（Chrome / Edge） |
+| **Everything** | voidtools Everything，**已建 NTFS 索引** | `winget install voidtools.Everything` · <https://www.voidtools.com/downloads/> | 仅 everything-mcp，且须**启用 HTTP 服务器** |
+| **WizTree** | 便携版或安装版均可 | `winget install AntibodySoftware.WizTree` · <https://diskanalyzer.com/> | 仅 wiztree-mcp |
+| **Beyond Compare 5** | 版本 5 | `winget install ScooterSoftware.BeyondCompare.5` · <https://www.scootersoftware.com/download> | 仅 bcompare-mcp；**试用版即可** |
+| MCP 宿主 | 任何支持 stdio MCP 的客户端 | Claude Code / Cursor / Codex / DSH 等 | 见第 2 节 |
+| 网络 | 能访问 GitHub Releases / npm registry / PyPI | — | 若下载需要代理，命令行要**显式带 `--proxy`**（`curl.exe` 不读系统代理设置） |
 
-> 只装某套服务时，只需要该服务对应的那几行前置。
+> winget ID 为本机实测（2026-10），搜不到时用官网链接手动装；用法 `winget install <ID>`，不确定 ID 先 `winget search <关键词>`。
+
+**只装某套服务时，只需要该服务对应的那几行前置。** 另外注意：**项目本体（源码）不等于可运行**——三套 MCP 服务器都需要克隆后完成构建或建虚拟环境，各自文档里有步骤；项目从哪来见 [README 的「项目本体从哪来」](README.md#项目本体从哪来)。
+
+### 1.1 就绪检查
+
+```powershell
+git --version          # 期望 2.x
+node -v                # 期望 v18+（bcompare-mcp 要 v24+）
+python --version       # 期望 3.10+（注意不要是 Microsoft Store 的占位 stub）
+bun --version          # 只用 bcompare-mcp 时需要
+```
+
+**前置软件自己能跑起来**（Everything 能搜到文件、WizTree 能打开、Beyond Compare 能启动），再去装对应的 MCP 服务器——否则出问题时分不清是哪一层。
 
 ---
 

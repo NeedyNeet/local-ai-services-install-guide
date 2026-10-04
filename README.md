@@ -15,6 +15,56 @@
 
 ---
 
+## 从零开始：你需要准备什么
+
+**本指南默认你只有一台 Windows 电脑**，下面每一样都给出获取方式。装哪套服务就装哪几样，不必全装。
+
+### 前置软件
+
+| 软件 | 哪些服务需要 | 获取方式 |
+|---|---|---|
+| **Git** | 全部（克隆项目本体） | `winget install Git.Git` · 或 <https://git-scm.com/download/win> |
+| **Node.js ≥ 18** | everything-mcp（≥18）、bcompare-mcp（≥24） | `winget install OpenJS.NodeJS` · 或 <https://nodejs.org/> |
+| **Python ≥ 3.10** | wiztree-mcp | `winget install Python.Python.3.14` · 或 <https://www.python.org/downloads/windows/> |
+| **voidtools Everything** | everything-mcp | `winget install voidtools.Everything` · 或 <https://www.voidtools.com/downloads/> |
+| **WizTree** | wiztree-mcp | `winget install AntibodySoftware.WizTree` · 或 <https://diskanalyzer.com/> |
+| **Beyond Compare 5** | bcompare-mcp | `winget install ScooterSoftware.BeyondCompare.5` · 或 <https://www.scootersoftware.com/download> |
+| **Bun ≥ 1.4.2** | bcompare-mcp（仅构建时需要） | `winget install Oven-sh.Bun` · 或 <https://bun.sh/> |
+| **Chrome 或 Edge**（Chromium 125+） | browser-skill | 系统一般已有；没有就装 <https://www.google.com/chrome/> 或 Edge |
+
+> 上表的 winget ID 在本机实测可搜到（winget 源，2026-10）。若某个搜不到，用右侧的官网链接手动安装。
+> winget 用法：`winget install <ID>`；不确定 ID 时先 `winget search <关键词>`。
+
+### 项目本体从哪来
+
+这是**最容易被忽略的一步**——四套服务里有三套的"服务器本体"是别人的开源项目，需要先克隆到本地：
+
+| 服务 | 项目本体 | 获取 |
+|---|---|---|
+| browser-skill | `Tencent/BrowserSkill` | **不需要克隆**——官方安装脚本会自动下载 CLI（见其文档第 2 节） |
+| everything-mcp | `Josephur/everything-mcp` | `git clone https://github.com/Josephur/everything-mcp.git` |
+| wiztree-mcp | `AlessandroBonomo28/wiztree-mcp` | `git clone https://github.com/AlessandroBonomo28/wiztree-mcp.git` |
+| bcompare-mcp | `danielsimonjr/beyondcompare-mcp` | `git clone https://github.com/danielsimonjr/beyondcompare-mcp.git` |
+
+> **注意分支名不统一**：有的项目默认分支是 `main`，有的是 `master`（如 wiztree-mcp）。
+> **直接 `git clone` 不加 `-b` 就会自动用默认分支**，这也是推荐做法——别手写 `-b main`，否则遇到 `master` 的项目会失败。
+
+克隆到哪里由你决定，文档里用 `<MCP 根目录>` 表示。建议放在一个专门的目录（不要放下载目录，会被清理）。
+克隆下来后**必须按各服务文档完成构建/虚拟环境**，才能被宿主调用——源码不等于可运行。
+
+### 就绪检查
+
+```powershell
+git --version          # 期望 2.x
+node -v                # 期望 v18+（bcompare-mcp 要 v24+）
+python --version       # 期望 3.10+（注意不要是 Microsoft Store 的占位 stub）
+bun --version          # 只用 bcompare-mcp 时需要
+```
+
+前置软件本身能跑起来（如 Everything 能搜到文件、WizTree 能打开），再去装对应的 MCP 服务器——否则会在后面分不清是哪一层出的问题。
+
+---
+
 ## 我应该装哪个
 
 | 你的痛点 | 装这个 |

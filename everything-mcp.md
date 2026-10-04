@@ -36,29 +36,33 @@
 curl.exe -sS "http://127.0.0.1:80/?search=everything-mcp&json=1&count=2&path_column=1&size_column=1&date_modified_column=1"
 ```
 
-期望：**HTTP 200**，返回 `{"totalResults":N,"results":[...]}`，且每条结果含 `name` / `path` / `size` / `date_modified` 四个字段。本机实测输出（节选）：
+期望：**HTTP 200**，返回 `{"totalResults":N,"results":[...]}`，且每条结果含 `name` / `path` / `size` / `date_modified` 四个字段。
+
+本机实测（搜索 `everything-mcp`；结构保留，路径已泛化）：
 
 ```json
 {
-	"totalResults":3,
-	"results":[
+	"totalResults": 3,
+	"results": [
 		{
-			"type":"folder",
-			"name":"everything-mcp",
-			"path":"D:\\Dev\\MCP",
-			"size":"",
-			"date_modified":"134355807077193639"
+			"type": "folder",
+			"name": "everything-mcp",
+			"path": "<MCP 根目录>",
+			"size": "",
+			"date_modified": "134355807077193639"
 		},
 		{
-			"type":"file",
-			"name":"browser-skill-and-everything-mcp-安装指南.md",
-			"path":"D:\\Dev\\Github\\dsh-local-services",
-			"size":"24691",
-			"date_modified":"134355808510268293"
+			"type": "file",
+			"name": "everything-mcp.md",
+			"path": "<本仓库>",
+			"size": "18903",
+			"date_modified": "134355808510268293"
 		}
 	]
 }
 ```
+
+> `size` 对文件夹是空字符串（正常）；`date_modified` 是 Windows FILETIME 的十进制字符串——MCP 服务器会转成可读时间再返回给你。
 
 判定标准：返回 200 **且能同时看到 `path` / `size` / `date_modified`** 才算前置就绪。少了这些字段，说明请求里没带对应的 `*_column=1`（MCP 服务器自己会带），或者你连的根本不是 Everything 的 HTTP 服务。
 
@@ -128,7 +132,10 @@ $env:EVERYTHING_PORT = '80'      # 换成本机实际端口
 ```js
 // probe.js —— 不依赖宿主，直接按 MCP stdio 协议验证服务器
 const { spawn } = require('child_process');
-const p = spawn('D:\\Node.js\\node.exe', ['D:\\Dev\\MCP\\everything-mcp\\dist\\index.js'], {
+// 把下面两个路径替换成你自己的（见 README 的「路径写法」）
+const NODE  = '<Node 安装目录>\\node.exe';
+const ENTRY = '<MCP 根目录>\\everything-mcp\\dist\\index.js';
+const p = spawn(NODE, [ENTRY], {
   env: { ...process.env, EVERYTHING_HOST: '127.0.0.1', EVERYTHING_PORT: '80' },
   stdio: ['pipe', 'pipe', 'pipe'],
 });
@@ -241,12 +248,14 @@ CommandLine : <Node 安装目录>\node.exe <MCP 根目录>\everything-mcp\dist\i
 
 ### 7.2 工具调用实测
 
-在会话里直接调用 `mcp__everything__everything_search`，例如 `query: "everything-mcp"`、`project_path` 指向 `<本仓库>`。本机实测输出：
+在会话里直接调用 `mcp__everything__everything_search`，例如 `query: "ext:md"`、`project_path` 指向 `<本仓库>`。本机实测输出：
 
 ```text
-Found 1 results (showing 1-1) in 56ms
+Found 5 results (showing 1-3) in 47ms
 
-<本仓库>\browser-skill-and-everything-mcp-安装指南.md  24.1 KB  2026-10-04T09:47:31.026Z
+<本仓库>\bcompare-mcp.md   12.0 KB  2026-10-04T14:41:23.100Z
+<本仓库>\common-guide.md   10.2 KB  2026-10-04T14:40:58.837Z
+<本仓库>\everything-mcp.md 18.6 KB  2026-10-04T14:41:44.951Z
 ```
 
 判定标准：**返回真实路径 + 大小 + 修改时间，且耗时在几十毫秒量级**。若报 `Cannot connect to Everything HTTP server at localhost:54321`，直接看 10.1。
@@ -272,7 +281,7 @@ Found 1 results (showing 1-1) in 56ms
 everything-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#2-mcp-配置的通用形态)）。通用接法就是「命令 + 参数 + 环境变量」三件套：
 
 - `command`：**真实 node 可执行文件的绝对路径** → `<Node 安装目录>\node.exe`
-- `args`：`["D:\\Dev\\MCP\\everything-mcp\\dist\\index.js"]`
+- `args`：`["<MCP 根目录>\\\\everything-mcp\\\\dist\\\\index.js"]`
 - `env`：`EVERYTHING_HOST=127.0.0.1`、`EVERYTHING_PORT=<你的端口>`（本机 `80`）、`EVERYTHING_MAX_RESULTS=255`
 
 ### 9.1 Claude Code
@@ -287,8 +296,8 @@ claude mcp add --scope user everything-search -- <Node 安装目录>\node.exe <M
 {
   "mcpServers": {
     "everything-search": {
-      "command": "D:\\Node.js\\node.exe",
-      "args": ["D:\\Dev\\MCP\\everything-mcp\\dist\\index.js"],
+      "command": "<Node 安装目录>\\\\node.exe",
+      "args": ["<MCP 根目录>\\\\everything-mcp\\\\dist\\\\index.js"],
       "env": { "EVERYTHING_HOST": "127.0.0.1", "EVERYTHING_PORT": "80" }
     }
   }
@@ -303,8 +312,8 @@ claude mcp add --scope user everything-search -- <Node 安装目录>\node.exe <M
 {
   "mcpServers": {
     "everything": {
-      "command": "D:\\Node.js\\node.exe",
-      "args": ["D:\\Dev\\MCP\\everything-mcp\\dist\\index.js"],
+      "command": "<Node 安装目录>\\\\node.exe",
+      "args": ["<MCP 根目录>\\\\everything-mcp\\\\dist\\\\index.js"],
       "env": { "EVERYTHING_HOST": "127.0.0.1", "EVERYTHING_PORT": "80", "EVERYTHING_MAX_RESULTS": "255" }
     }
   }
