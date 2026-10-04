@@ -16,9 +16,9 @@
 | 项 | 要求 | 获取方式 / 本机实测 |
 |---|---|---|
 | 操作系统 | Windows（WizTree 是 Windows 程序） | Windows 10 x64 |
-| Python | **≥ 3.10** | `winget install Python.Python.3.14`；本机 `<Python 安装目录>\python.exe`（3.14.7）→ venv 内 3.14.6 |
-| Git | 任意近期版本 | `winget install Git.Git`（用于克隆源码） |
-| WizTree | 便携版或安装版均可 | `winget install AntibodySoftware.WizTree`；本机便携版 `<WizTree 安装目录>\WizTree64.exe` |
+| Python | **≥ 3.10** | `winget install --id Python.Python.3.14 --exact`；本机 `<Python 安装目录>\python.exe`（3.14.7）→ venv 内 3.14.6 |
+| Git | 任意近期版本 | `winget install --id Git.Git --exact`（用于克隆源码） |
+| WizTree | 便携版或安装版均可 | `winget install --id AntibodySoftware.WizTree --exact`；本机便携版 `<WizTree 安装目录>\WizTree64.exe` |
 | 依赖 | 仅 `mcp>=2.0.0,<3` | 装进 venv，见第 2 节 |
 
 > **Python 的选择很重要**：系统 `python` 可能是 Microsoft Store 的占位 stub（`WindowsApps\python.exe`），不要用它建 venv。用真实安装路径，或用 `py -3.xx` 指定版本。

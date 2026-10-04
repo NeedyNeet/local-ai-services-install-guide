@@ -45,7 +45,7 @@ git clone https://github.com/danielsimonjr/beyondcompare-mcp.git '<MCP 根目录
 # 2) 安装 Bun（若尚无）
 irm https://bun.sh/install.ps1 | iex
 # 默认装到 %USERPROFILE%\.bun\bin\bun.exe
-# 或用 winget：winget install Oven-sh.Bun
+# 或用 winget：winget install --id Oven-sh.Bun --exact
 
 # 3) 装依赖
 & "$env:USERPROFILE\.bun\bin\bun.exe" install --cwd '<MCP 根目录>\beyondcompare-mcp'
