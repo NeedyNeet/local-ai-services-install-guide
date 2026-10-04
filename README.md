@@ -23,17 +23,35 @@
 
 | 软件 | 哪些服务需要 | 获取方式 |
 |---|---|---|
-| **Git** | 全部（克隆项目本体） | `winget install Git.Git` · 或 <https://git-scm.com/download/win> |
-| **Node.js ≥ 18** | everything-mcp（≥18）、bcompare-mcp（≥24） | `winget install OpenJS.NodeJS` · 或 <https://nodejs.org/> |
-| **Python ≥ 3.10** | wiztree-mcp | `winget install Python.Python.3.14` · 或 <https://www.python.org/downloads/windows/> |
-| **voidtools Everything** | everything-mcp | `winget install voidtools.Everything` · 或 <https://www.voidtools.com/downloads/> |
-| **WizTree** | wiztree-mcp | `winget install AntibodySoftware.WizTree` · 或 <https://diskanalyzer.com/> |
-| **Beyond Compare 5** | bcompare-mcp | `winget install ScooterSoftware.BeyondCompare.5` · 或 <https://www.scootersoftware.com/download> |
-| **Bun ≥ 1.4.2** | bcompare-mcp（仅构建时需要） | `winget install Oven-sh.Bun` · 或 <https://bun.sh/> |
+| **Git** | 全部（克隆项目本体） | `winget install --id Git.Git --exact` · 或 <https://git-scm.com/download/win> |
+| **Node.js ≥ 18** | everything-mcp（≥18）、bcompare-mcp（≥24） | `winget install --id OpenJS.NodeJS --exact` · 或 <https://nodejs.org/> |
+| **Python ≥ 3.10** | wiztree-mcp | `winget install --id Python.Python.3.14 --exact` · 或 <https://www.python.org/downloads/windows/> |
+| **voidtools Everything** | everything-mcp | `winget install --id voidtools.Everything --exact` · 或 <https://www.voidtools.com/downloads/> |
+| **WizTree** | wiztree-mcp | `winget install --id AntibodySoftware.WizTree --exact` · 或 <https://diskanalyzer.com/> |
+| **Beyond Compare 5** | bcompare-mcp | `winget install --id ScooterSoftware.BeyondCompare.5 --exact` · 或 <https://www.scootersoftware.com/download> |
+| **Bun ≥ 1.4.2** | bcompare-mcp（仅构建时需要） | `winget install --id Oven-sh.Bun --exact` · 或 <https://bun.sh/> |
 | **Chrome 或 Edge**（Chromium 125+） | browser-skill | 系统一般已有；没有就装 <https://www.google.com/chrome/> 或 Edge |
 
-> 上表的 winget ID 在本机实测可搜到（winget 源，2026-10）。若某个搜不到，用右侧的官网链接手动安装。
-> winget 用法：`winget install <ID>`；不确定 ID 时先 `winget search <关键词>`。
+**一次装齐**（只需其中几个就把不要的删掉）：
+
+```powershell
+# 逐个安装，无需管理员权限；装完必须重开终端，新命令才会进入 PATH
+foreach ($id in 'Git.Git','OpenJS.NodeJS','Python.Python.3.14',
+                'voidtools.Everything','AntibodySoftware.WizTree',
+                'ScooterSoftware.BeyondCompare.5','Oven-sh.Bun') {
+    winget install --id $id --exact --accept-package-agreements --accept-source-agreements
+}
+```
+
+> **为什么用循环而不是一行塞多个 ID**：winget 的 `install` **不接受重复的 `--id`**（会报 `提供的参数超过允许的参数: "id"`），
+> 所以只能用循环逐个装。上面的 `--accept-*` 参数用于免交互确认。
+
+> **装完必须重开终端**：winget 修改 PATH 后，当前已打开的窗口读到的还是旧 PATH（winget 自己会提示 `已修改路径环境变量；重启 shell 以使用新值`）。
+> 不重开的话，`node -v` / `python --version` 会报"找不到命令"——这不是装失败。
+
+> 上表的 ID 在本机实测（winget 源，2026-10）：7 个 ID 均可解析、都有 x64 安装程序与 SHA256 校验，
+> 并已用另一个包做过完整的"安装 → 验证可运行 → 卸载"端到端验证。
+> 若某个 ID 搜不到（源同步差异），用右侧官网链接手动安装。
 
 ### 项目本体从哪来
 
