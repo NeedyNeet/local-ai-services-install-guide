@@ -184,7 +184,58 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe' OR Name='python.exe'" |
 
 ---
 
-## 6. 路径写法说明
+## 6. 四套服务速查表
+
+**装多个服务时用这张表对照**（排错时尤其有用：先确认你改的是哪个服务的哪个值）。
+
+### 6.1 配置对照
+
+| | browser-skill | everything-mcp | wiztree-mcp | bcompare-mcp |
+|---|---|---|---|---|
+| **形态** | CLI + 浏览器扩展（**非 MCP**） | stdio MCP | stdio MCP | stdio MCP |
+| **项目本体** | 不需克隆（脚本自动下载 CLI） | `Josephur/everything-mcp` | `AlessandroBonomo28/wiztree-mcp` | `danielsimonjr/beyondcompare-mcp` |
+| **运行时** | 自带可执行文件 | Node ≥ 18 | Python ≥ 3.10 | Node ≥ 24 |
+| **构建** | 无（安装脚本处理） | `npm install` + `npm run build` | `pip install -r`（装进 venv） | `bun install` + `bun run build` |
+| **入口** | `<用户>\.local\bin\bsk.exe` | `dist\index.js` | `wiztree_mcp.py` | `dist\index.js` |
+| **必设的环境变量** | `BSK_HOME`（沙箱场景）、`BSK_AUTO_START=0`（沙箱场景） | `EVERYTHING_PORT`（端口被改过时） | `WIZTREE_EXE`（非默认安装位置时） | `BCOMP_PATH`（**非默认位置必设**） |
+| **易错点** | 扩展要**启用本地连接**；Google 不可达时商店装不上 | 项目默认连 `54321`，实际端口常不同 | 未提权时整盘扫描极慢 | 必须用 **`BComp.com`** 而非 `BCompare.exe` |
+| **工具名** | `browser_session` / `browser_page` / `browser_inspect` / `browser_interact` / `browser_tabs` / `browser_assist`（6 个） | `mcp__everything__everything_search`（1 个） | `mcp__wiztree__*`（17 个） | `mcp__bcompare__*`（5 个） |
+| **超时建议** | 插件配置 `defaultTimeoutMs`（120000） | `toolCallTimeoutMs: 60000` | `toolCallTimeoutMs: 900000`（整盘扫描） | `toolCallTimeoutMs: 181000` |
+| **本机文档** | [browser-skill.md](browser-skill.md) | [everything-mcp.md](everything-mcp.md) | [wiztree-mcp.md](wiztree-mcp.md) | [bcompare-mcp.md](bcompare-mcp.md) |
+
+### 6.2 服务端自身的配置（不是 MCP 侧的配置）
+
+排错时最容易搞混的一点：**每个服务都有一个"服务端"，它有自己的设置**。MCP 侧的 `env` 只是把服务端的实际位置/端口告诉 MCP 服务器。
+
+| 服务 | 服务端在哪配 | 要确认什么 |
+|---|---|---|
+| everything-mcp | Everything 主界面 → 工具 → 选项 → **HTTP 服务器** | 是否启用；**端口**是多少（默认 54321） |
+| wiztree-mcp | WizTree 的安装位置 | `WizTree64.exe` 在哪；是否需要管理员权限（`admin: true`） |
+| bcompare-mcp | Beyond Compare 的安装位置 | `BComp.com` 在哪（**不是** `BCompare.exe`）；许可状态 |
+| browser-skill | 浏览器扩展弹窗 + `bsk` CLI | 扩展是否已启用本地连接；`bsk doctor` 是否无 fail |
+
+### 6.3 数据与缓存位置（清理时用）
+
+| 服务 | 位置 | 内容 |
+|---|---|---|
+| browser-skill | `%USERPROFILE%\.bsk\`（可用 `BSK_HOME` 改） | `daemon.json`、IPC、`audit/`（默认关闭的审计）、`dsh-starts/` |
+| wiztree-mcp | `%LOCALAPPDATA%\wiztree-mcp`（可用 `WIZTREE_MCP_CACHE` 改） | 快照 CSV、树状图 PNG；默认保留 12 个 |
+| everything-mcp | Everything 自己的数据目录 | `Everything.db` 索引。**便携版/迁移过的机器上可能有多份**（见 [everything-mcp.md](everything-mcp.md) 第 10.2 节） |
+| bcompare-mcp | 无独立缓存 | 比较/同步直接操作文件 |
+
+### 6.4 端口与资源占用
+
+| 服务 | 监听 | 说明 |
+|---|---|---|
+| Everything | HTTP 端口（本机 `80`，默认 `54321`） | 仅 `127.0.0.1`，MCP 侧靠 `EVERYTHING_PORT` 连它 |
+| browser-skill daemon | WebSocket（本机 `52800`）+ 命名管道 | 端口由 daemon 分配，扩展按弹窗里显示的端口连接 |
+| everything-mcp / wiztree-mcp / bcompare-mcp | **不监听端口** | 它们是 stdio 服务器，由宿主启动并走标准输入输出通信 |
+
+> 所以**多服务共存不会有端口冲突**（除了 Everything 自己要占一个 HTTP 端口）。真正会互相干扰的是"同一个服务被启动两次"——例如两个 daemon、或同一项目被两个宿主同时拉起。
+
+---
+
+## 7. 路径写法说明
 
 本文档用 `<Node 安装目录>`、`<MCP 根目录>`、`<便携软件根目录>` 这类**占位符**表示位置，因为四套服务装在哪里由你决定。看到占位符时替换成你自己的实际路径即可。
 

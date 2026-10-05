@@ -7,7 +7,8 @@
 - 本机实测：WizTree `4.31.0.0` 便携版、Python `3.14.6`、服务器 `wiztree-mcp 1.0.0`
 - 工具前缀：`mcp__wiztree__*`（共 17 个）
 
-> 通用部分（环境前置、DSH 挂载机制、跨工具方式、共用踩坑、更新卸载）见 [common-guide.md](common-guide.md)。
+> 通用部分（环境前置、MCP 配置形态、共用踩坑、更新卸载）见 [common-guide.md](common-guide.md)。
+> 四套服务的配置对照表见 [common-guide.md 第 6 节](common-guide.md#6-四套服务速查表)。
 
 ---
 
@@ -45,6 +46,7 @@ cd '<MCP 根目录>\wiztree-mcp'
 ```
 
 > 装依赖时如遇网络问题，给 pip 加镜像源（例如 `-i https://pypi.tuna.tsinghua.edu.cn/simple`）。
+> 本机实测这条链路从零可跑通：建 venv 约 3 秒、装依赖约 25 秒、`import mcp` 成功。
 
 **关键点**：配置里必须指向 **`.venv\Scripts\python.exe`**，不要指向系统 python，也不要指望"先激活虚拟环境"——MCP 桥接会清洗环境变量（见 [common-guide.md](common-guide.md#42-mcp-子进程必须用真正的解释器可执行文件)）。
 
@@ -52,7 +54,7 @@ cd '<MCP 根目录>\wiztree-mcp'
 
 ## 3. 先验证服务器本身，再接入宿主
 
-装完先不碰 DSH，直接跑一次自检——这样后面出错就能立刻判断是"服务器问题"还是"宿主配置问题"：
+装完先不碰宿主，直接跑一次自检——这样后面出错就能立刻判断是"服务器问题"还是"宿主配置问题"：
 
 ```powershell
 $env:WIZTREE_EXE = '<WizTree 安装目录>\WizTree64.exe'
@@ -80,7 +82,36 @@ wiztree-mcp 1.0.0 ready (cache: C:\Users\<你的用户名>\AppData\Local\wiztree
 
 ---
 
-## 5. 在其他 AI 工具里使用（宿主无关）
+## 5. 接入宿主
+
+### 5.1 DeepSeek Harness（DSH）
+
+追加到 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml`（**先备份**）：
+
+```yaml
+- insert:
+    - id: mcp-wiztree
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: wiztree
+        transport: stdio
+        # 必须指向 .venv 里的 python：MCP 子进程环境会被清洗，无法依赖 PATH 或激活的虚拟环境
+        command: '<MCP 根目录>\wiztree-mcp\.venv\Scripts\python.exe'
+        args:
+          - '<MCP 根目录>\wiztree-mcp\wiztree_mcp.py'
+        env:
+          WIZTREE_EXE: '<WizTree 安装目录>\WizTree64.exe'
+        # 默认 60000ms 对全盘扫描太短（无管理员权限时可能数分钟）
+        toolCallTimeoutMs: 900000
+```
+
+保存即热加载（无需重启 DSH），子进程会被拉起。
+
+> **项目自带的 `dsh-cordis-patch.yml` 里路径是占位符**（`C:\path\to\...`），不能直接用，只适合当模板参考。注意里面提到的写法要点：Windows 路径**不要用双引号**（`"C:\Users\..."` 的 `\U` 会被 YAML 当转义序列而解析失败），用单引号或裸写。
+
+挂载机制与 DSH 专属坑（环境变量清洗、沙箱 IPC、版本对齐）见 [dsh-mcp-setup.md](dsh-mcp-setup.md)。
+
+### 5.2 其他宿主（宿主无关）
 
 wiztree-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#2-mcp-配置的通用形态)）。三件套如下：
 
@@ -118,34 +149,7 @@ claude mcp add wiztree --scope user -- "<MCP 根目录>\wiztree-mcp\.venv\Script
 > 也就是假定你把 wiztree-mcp 放在 WizTree 的安装目录里。如果你的项目不在此位置（例如单独放在某个 MCP 目录下），
 > 它生成的 `env` 会指向一个不存在的文件——**这种情况请手工写 `WIZTREE_EXE`**。
 
----
-
-## 6. 接入 DSH
-
-追加到 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml`（**先备份**）：
-
-```yaml
-- insert:
-    - id: mcp-wiztree
-      name: '@deepseek-ai/dsh-mcp-client'
-      config:
-        serverName: wiztree
-        transport: stdio
-        # 必须指向 .venv 里的 python：MCP 子进程环境会被清洗，无法依赖 PATH 或激活的虚拟环境
-        command: '<MCP 根目录>\wiztree-mcp\.venv\Scripts\python.exe'
-        args:
-          - '<MCP 根目录>\wiztree-mcp\wiztree_mcp.py'
-        env:
-          WIZTREE_EXE: '<WizTree 安装目录>\WizTree64.exe'
-        # 默认 60000ms 对全盘扫描太短（无管理员权限时可能数分钟）
-        toolCallTimeoutMs: 900000
-```
-
-保存即热加载（无需重启 DSH），子进程会被拉起。
-
-> **项目自带的 `dsh-cordis-patch.yml` 里路径是占位符**（`C:\path\to\...`），不能直接用，只适合当模板参考。注意里面提到的写法要点：Windows 路径**不要用双引号**（`"C:\Users\..."` 的 `\U` 会被 YAML 当转义序列而解析失败），用单引号或裸写。
-
-验证：
+### 5.3 验证接入成功
 
 ```powershell
 # 子进程应指向你配置里的 venv python 与脚本
@@ -174,7 +178,7 @@ Contents   : 3,775 files in 578 folders
 
 ---
 
-## 7. 工具一览（17 个）
+## 6. 工具一览（17 个）
 
 | 工具 | 用途 |
 |---|---|
@@ -197,11 +201,18 @@ Contents   : 3,775 files in 578 folders
 
 > 所有查询类工具都接受 `path` / `refresh` / `max_age_minutes` / `admin` / `filter` / `filter_exclude` / `timeout_seconds`，**找不到有效快照时会自己扫**，所以不必先调 `wiztree_scan`。
 
+### 6.1 本服务上的验证清单
+
+- [ ] 第 3 节的自检能打印 `wiztree-mcp 1.0.0 ready`
+- [ ] 宿主里 `mcp__wiztree__wiztree_info` 返回正确的 exe 路径与版本
+- [ ] 对一个小文件夹调 `wiztree_scan`，能返回文件数与总量
+- [ ] `wiztree_top_files` 能列出该文件夹里最大的文件
+
 ---
 
-## 8. 本服务专属注意事项
+## 7. 本服务专属注意事项
 
-### 8.1 性能：不加管理员权限，整盘扫描会很慢
+### 7.1 性能：不加管理员权限，整盘扫描会很慢
 
 WizTree 读 NTFS 的 **MFT** 是秒级完成全盘扫描的前提，而读 MFT **需要管理员权限**。
 
@@ -210,27 +221,27 @@ WizTree 读 NTFS 的 **MFT** 是秒级完成全盘扫描的前提，而读 MFT *
 
 因此**优先扫描具体文件夹，而不是整盘**。`wiztree_info` 会告诉你当前处于哪种状态。
 
-### 8.2 用户说"这里 / 这个盘 / 我现在开着的"
+### 7.2 用户说"这里 / 这个盘 / 我现在开着的"
 
 先调 `wiztree_gui_state`，读出 WizTree 窗口当前指向的目标，再拿该路径去查询——不需要用户手打路径。
 
 注意其**能力边界**：WizTree 的文件列表是 owner-drawn（`TVirtualDrawTree`），从进程外只能看到**它指向哪里**，**读不到屏幕上的行**。
 
-### 8.3 与 GUI 协作的两种方式
+### 7.3 与 GUI 协作的两种方式
 
 - **重扫（零操作）**：服务器自己扫描从 GUI 读到的目标，代价是一次扫描的时间。
 - **CSV 交接（瞬时）**：在 GUI 里 `File > Export` 导出，再 `wiztree_import_csv`。不重扫，而且**如果 GUI 是以管理员身份运行的，就继承了那次 MFT 扫描**——这是处理整盘时最快的路径。CSV 文件不会被修改或删除。
 
 命令行导出与已打开的 WizTree 窗口**可以并存**（全局互斥量不阻止并发实例）。
 
-### 8.4 其他
+### 7.4 其他
 
 - 快照默认留在 `%LOCALAPPDATA%\wiztree-mcp`，最多 12 个（`WIZTREE_MCP_MAX_SCANS` 可调），`wiztree_clear_cache` 可清理。
 - `toolCallTimeoutMs` 设成 `900000`（15 分钟）：默认 60 秒对整盘扫描会被中途掐断。
 
 ---
 
-## 9. 更新与卸载
+## 8. 更新与卸载
 
 **更新**：项目目录里 `git pull` 后无需重新构建（单文件 Python，直接加载）；若 `requirements.txt` 有变化，重新 pip install：
 

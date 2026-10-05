@@ -19,6 +19,27 @@
 
 **本指南默认你只有一台 Windows 电脑**，下面每一样都给出获取方式。装哪套服务就装哪几样，不必全装。
 
+### 网络前提
+
+这一节值得先看——**网络限制是这个场景最常见的卡点**，而且症状往往不指向真正的原因。
+
+| 需要访问 | 用在哪 | 不通时的表现 / 应对 |
+|---|---|---|
+| **GitHub**（`github.com` + `raw.githubusercontent.com`） | 克隆三个项目本体、下载 browser-skill 的 CLI 与扩展包 | 克隆失败、安装脚本下载超时。GitHub 一般可直连；`raw.githubusercontent.com` 有时不稳，可换用代理 |
+| **Google（Chrome 应用商店）** | browser-skill 的浏览器扩展 | **这是最容易踩的一个**：商店打不开 → 扩展装不上，但**扩展弹窗可能仍显示"已连接"，具有误导性**。应对：改用 **Edge 加载项商店**（国内通常可直连），或用 **GitHub Release 解压加载**（不需要商店，完全不依赖 Google） |
+| **npm registry** | everything-mcp / bcompare-mcp 装依赖 | 装依赖卡住或超时。可换国内镜像（`npm config set registry <镜像>`） |
+| **PyPI** | wiztree-mcp 装依赖 | 同上。可加镜像源：`pip install -i https://pypi.tuna.tsinghua.edu.cn/simple ...` |
+| **winget 源** | 安装前置软件 | 搜索不到包。用前置软件表右侧的官网链接手动安装 |
+| **Beyond Compare 官网** | 购买/续期许可（见其文档第 9.1 节） | 试用期 30 天，到期需自己处理 |
+
+**如果你在用代理**（本机就是这种情况）：
+
+- 系统代理开着，**浏览器会自动走**，但**命令行工具不一定**——`curl.exe` **不会自动读系统代理设置**，需要用 `--proxy <你的代理地址>` 显式指定。
+- `irm` / `Invoke-WebRequest`、`pip`、`npm`、`git` 各有各的代理读取方式，其中一个不通不代表全都通。遇到"浏览器能开、命令行不能下"就优先怀疑这里。
+- browser-skill 的安装脚本支持固定版本（`$env:BSK_VERSION`），配合能联网的下载器（如 Node 的 `fetch`）可以绕过 PowerShell 自身的 HTTPS 问题——具体见 [browser-skill.md](browser-skill.md) 第 3.1 节。
+
+> 一句话：**装之前先确认你能下载**（随便 clone 一个仓库、pip 装个小包）。这一步花两分钟，能省掉后面半小时的误判。
+
 ### 前置软件
 
 | 软件 | 哪些服务需要 | 获取方式 |
@@ -129,6 +150,8 @@ bun --version          # 只用 bcompare-mcp 时需要
 ---
 
 ## 几个跨服务的关键提醒
+
+> 装多个服务时，**[common-guide.md 第 6 节「四套服务速查表」](common-guide.md#6-四套服务速查表)** 把配置、服务端设置、数据位置、端口占用放在一张表里对照——排错时先看它。
 
 | 提醒 | 说明 |
 |---|---|

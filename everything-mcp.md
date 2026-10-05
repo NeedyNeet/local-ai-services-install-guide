@@ -2,11 +2,26 @@
 
 把 **voidtools Everything** 的 NTFS 索引能力通过 MCP 暴露给 AI，实现全盘文件「毫秒级」检索（工具名 `mcp__everything__everything_search`）。
 
-> 通用部分（环境前置、DSH 挂载机制、跨工具方式、共用踩坑、更新卸载）见 [common-guide.md](common-guide.md)。
+> 通用部分（环境前置、MCP 配置形态、共用踩坑、更新卸载）见 [common-guide.md](common-guide.md)。
+> 四套服务的配置对照表见 [common-guide.md 第 6 节](common-guide.md#6-四套服务速查表)。
 
 - 实测环境：Windows x64 + DeepSeek Harness（DSH `0.2.0-rc.2`），2026-10-04
 - 实测版本：Everything `1.4.1.1026 x64` 便携版（HTTP 端口 **80**）、Node `v24.19.0`、MCP 客户端 `@deepseek-ai/dsh-mcp-client@0.2.0-rc.2`
 - 项目本体（本机）：`<MCP 根目录>\everything-mcp`，运行时入口 `dist\index.js`
+
+**本页导航**（本文的章节顺序与本仓库另两份服务文档略有不同，按需跳转）：
+
+| 我想…… | 看 |
+|---|---|
+| 确认前置条件 | [第 1 节](#1-前置条件只列本服务需要的) |
+| **先确认 Everything 本身能用** | [第 2 节](#2-前置验证everything-http-服务必须真的可用)（含端口查法） |
+| 装并构建 | [第 3 节](#3-安装与构建) |
+| **接入宿主前独立验证服务器** | [第 4 节](#4-先用协议探针独立验证服务器再接入宿主)（含探针脚本） |
+| 查环境变量 | [第 5 节](#5-配置项环境变量) |
+| DSH 接入 | [第 6 节](#6-接入-dsh) |
+| 其他宿主（Claude Code / Cursor） | [第 9 节](#9-在其他-ai-工具里使用) |
+| 验收清单 | [第 7 节](#7-验收) · [第 8 节](#8-在本服务上继续验证的清单) |
+| **踩坑（端口不一致等）** | [第 10 节](#10-本服务专属注意事项) |
 
 ---
 
@@ -91,7 +106,7 @@ LocalAddress LocalPort OwningProcess
 
 ## 3. 安装与构建
 
-MCP 服务器是**需要构建、需要长期维护**的代码，不要留在下载目录（临时区会被清理）；本机固定在 `<MCP 根目录>\everything-mcp`（路径规范见 [common-guide.md](common-guide.md#6-路径写法说明)）。下面命令里的目录请替换成你自己的：
+MCP 服务器是**需要构建、需要长期维护**的代码，不要留在下载目录（临时区会被清理）；本机固定在 `<MCP 根目录>\everything-mcp`（路径规范见 [common-guide.md](common-guide.md#7-路径写法说明)）。下面命令里的目录请替换成你自己的：
 
 ```powershell
 # 1) 取源码（任选其一）
@@ -191,11 +206,11 @@ node probe.js
 dsh plugin --profile desktop add @deepseek-ai/dsh-mcp-client@0.2.0-rc.2
 ```
 
-版本对齐的原因、以及 `installed as a plain dependency, not a profile layer` 提示为何正常，见 [common-guide.md](dsh-mcp-setup.md#41-mcp-客户端插件版本必须与-dsh-主版本对齐)。
+版本对齐的原因、以及 `installed as a plain dependency, not a profile layer` 提示为何正常，见 [dsh-mcp-setup.md](dsh-mcp-setup.md#41-mcp-客户端插件版本必须与-dsh-主版本对齐)。
 
 ### 6.2 加 insert 条目
 
-在 profile 补丁 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml` 末尾追加（**顶层是列表**，不要嵌套；`insert` 条目的机制说明见 [common-guide.md](dsh-mcp-setup.md#2-每加一个-mcp-服务器--加一个-insert-条目)）：
+在 profile 补丁 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml` 末尾追加（**顶层是列表**，不要嵌套；`insert` 条目的机制说明见 [dsh-mcp-setup.md](dsh-mcp-setup.md#2-每加一个-mcp-服务器--加一个-insert-条目)）：
 
 ```yaml
 - insert:
@@ -204,7 +219,7 @@ dsh plugin --profile desktop add @deepseek-ai/dsh-mcp-client@0.2.0-rc.2
       config:
         serverName: everything
         transport: stdio
-        # 必须是真正的 node.exe；不要用宿主自带的包装脚本，原因见 common-guide.md 5.2
+        # 必须是真正的 node.exe；不要用宿主自带的包装脚本，原因见 [dsh-mcp-setup.md](dsh-mcp-setup.md#42-子进程必须用真正的解释器可执行文件)
         command: '<Node 安装目录>\node.exe'
         args:
           - '<MCP 根目录>\everything-mcp\dist\index.js'
