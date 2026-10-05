@@ -80,7 +80,47 @@ wiztree-mcp 1.0.0 ready (cache: C:\Users\<你的用户名>\AppData\Local\wiztree
 
 ---
 
-## 5. 接入 DSH
+## 5. 在其他 AI 工具里使用（宿主无关）
+
+wiztree-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#2-mcp-配置的通用形态)）。三件套如下：
+
+- `command`：**`.venv\Scripts\python.exe` 的绝对路径**（不是系统 python，也不要指望"先激活虚拟环境"）
+- `args`：`wiztree_mcp.py` 的绝对路径
+- `env`：`WIZTREE_EXE`（WizTree 便携版/非默认安装时**必须**设）
+
+通用 JSON 形态（Claude Desktop 的 `claude_desktop_config.json`、Cursor 的 `mcp.json` 等都是这个结构）：
+
+```json
+{
+  "mcpServers": {
+    "wiztree": {
+      "command": "<MCP 根目录>\\wiztree-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["<MCP 根目录>\\wiztree-mcp\\wiztree_mcp.py"],
+      "env": { "WIZTREE_EXE": "<WizTree 安装目录>\\WizTree64.exe" }
+    }
+  }
+}
+```
+
+**Claude Code**（官方 README 给的命令形式）：
+
+```powershell
+claude mcp add wiztree --scope user -- "<MCP 根目录>\wiztree-mcp\.venv\Scripts\python.exe" "<MCP 根目录>\wiztree-mcp\wiztree_mcp.py"
+```
+
+> `claude mcp add` 这条 CLI **不直接收 `env`**，所以 `WIZTREE_EXE` 需要另外注入：或写进 JSON 配置（结构里支持 `env`），或用带环境变量的包装脚本。
+
+**Cursor**：`Settings → MCP → Add new MCP server`，或直接编辑 `%USERPROFILE%\.cursor\mcp.json`。
+
+> 项目自带 `cursor-mcp.json`（在项目根目录），是给 Cursor 用的现成模板，把 `C:\path\to\...` 换成你的实际路径即可。
+> 项目还自带 `install_mcp.py`，能自动往 Cursor 的 `mcp.json` 里合并这一条（会先做带时间戳的备份，可重复运行）。
+> **但它推导 `WIZTREE_EXE` 的方式是「项目目录的上一级」**（源码里写的是 `HERE.parent / "WizTree64.exe"`），
+> 也就是假定你把 wiztree-mcp 放在 WizTree 的安装目录里。如果你的项目不在此位置（例如单独放在某个 MCP 目录下），
+> 它生成的 `env` 会指向一个不存在的文件——**这种情况请手工写 `WIZTREE_EXE`**。
+
+---
+
+## 6. 接入 DSH
 
 追加到 `%USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml`（**先备份**）：
 
@@ -134,7 +174,7 @@ Contents   : 3,775 files in 578 folders
 
 ---
 
-## 6. 工具一览（17 个）
+## 7. 工具一览（17 个）
 
 | 工具 | 用途 |
 |---|---|
@@ -159,9 +199,9 @@ Contents   : 3,775 files in 578 folders
 
 ---
 
-## 7. 本服务专属注意事项
+## 8. 本服务专属注意事项
 
-### 7.1 性能：不加管理员权限，整盘扫描会很慢
+### 8.1 性能：不加管理员权限，整盘扫描会很慢
 
 WizTree 读 NTFS 的 **MFT** 是秒级完成全盘扫描的前提，而读 MFT **需要管理员权限**。
 
@@ -170,27 +210,27 @@ WizTree 读 NTFS 的 **MFT** 是秒级完成全盘扫描的前提，而读 MFT *
 
 因此**优先扫描具体文件夹，而不是整盘**。`wiztree_info` 会告诉你当前处于哪种状态。
 
-### 7.2 用户说"这里 / 这个盘 / 我现在开着的"
+### 8.2 用户说"这里 / 这个盘 / 我现在开着的"
 
 先调 `wiztree_gui_state`，读出 WizTree 窗口当前指向的目标，再拿该路径去查询——不需要用户手打路径。
 
 注意其**能力边界**：WizTree 的文件列表是 owner-drawn（`TVirtualDrawTree`），从进程外只能看到**它指向哪里**，**读不到屏幕上的行**。
 
-### 7.3 与 GUI 协作的两种方式
+### 8.3 与 GUI 协作的两种方式
 
 - **重扫（零操作）**：服务器自己扫描从 GUI 读到的目标，代价是一次扫描的时间。
 - **CSV 交接（瞬时）**：在 GUI 里 `File > Export` 导出，再 `wiztree_import_csv`。不重扫，而且**如果 GUI 是以管理员身份运行的，就继承了那次 MFT 扫描**——这是处理整盘时最快的路径。CSV 文件不会被修改或删除。
 
 命令行导出与已打开的 WizTree 窗口**可以并存**（全局互斥量不阻止并发实例）。
 
-### 7.4 其他
+### 8.4 其他
 
 - 快照默认留在 `%LOCALAPPDATA%\wiztree-mcp`，最多 12 个（`WIZTREE_MCP_MAX_SCANS` 可调），`wiztree_clear_cache` 可清理。
 - `toolCallTimeoutMs` 设成 `900000`（15 分钟）：默认 60 秒对整盘扫描会被中途掐断。
 
 ---
 
-## 8. 更新与卸载
+## 9. 更新与卸载
 
 **更新**：项目目录里 `git pull` 后无需重新构建（单文件 Python，直接加载）；若 `requirements.txt` 有变化，重新 pip install：
 

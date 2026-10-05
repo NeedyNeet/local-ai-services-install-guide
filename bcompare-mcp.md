@@ -3,7 +3,7 @@
 用 **Beyond Compare** 做文件/文件夹比较、三方合并、目录同步的 MCP 服务器。
 
 本机采用的是 **[danielsimonjr/beyondcompare-mcp](https://github.com/danielsimonjr/beyondcompare-mcp)**（TypeScript）。
-另一个候选项目（`beyondcompare-mcp`，Python 版）**已评估并放弃**，原因见第 7 节——它的退出码判断是错的，核心比较功能不可用。
+另一个候选项目（`beyondcompare-mcp`，Python 版）**已评估并放弃**，原因见第 8 节——它的退出码判断是错的，核心比较功能不可用。
 
 - 项目：`<MCP 根目录>\beyondcompare-mcp`
 - 本机实测：服务器 `1.1.0`、Bun `1.4.2`、Node `v24.19.0`、Beyond Compare `5`（便携版）
@@ -21,7 +21,7 @@
 | Beyond Compare | **5**（项目 README 明确要求 BC5） | 便携版 `<Beyond Compare 安装目录>` |
 | 构建工具 | **Bun ≥ 1.4.2**（`bun install` + `bun run build`） | Bun `1.4.2` |
 | 运行时 | **Node ≥ 24** | `<Node 安装目录>\node.exe` v24.19.0 |
-| 许可 | 试用版即可 | **试用/已激活均可，见第 8 节** |
+| 许可 | 试用版即可 | **试用/已激活均可，见第 9 节** |
 
 ### 1.1 关键：必须用 `BComp.com` 而不是 `BCompare.exe`
 
@@ -32,7 +32,7 @@ Beyond Compare 目录下有两个可执行文件，**这个选择决定整套服
 | `BCompare.exe` | **GUI 程序** | ❌ 从命令行调用时**不返回退出码**，还会留下常驻窗口进程 |
 | `BComp.com` | **控制台程序** | ✅ 正确返回退出码，是 BC 官方推荐的脚本/自动化入口 |
 
-本服务器的核心逻辑就是「读退出码 → 判定 SAME/SIMILAR/DIFFERENT」，所以**必须指向 `BComp.com`**。这是本机实测确认的（详见第 7 节的项目对比）。
+本服务器的核心逻辑就是「读退出码 → 判定 SAME/SIMILAR/DIFFERENT」，所以**必须指向 `BComp.com`**。这是本机实测确认的（详见第 8 节的项目对比）。
 
 ---
 
@@ -126,7 +126,47 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 
 ---
 
-## 6. 工具一览（5 个）
+## 6. 在其他 AI 工具里使用（宿主无关）
+
+bcompare-mcp 是**标准 stdio MCP 服务器**，与宿主无关（通用说明见 [common-guide.md](common-guide.md#2-mcp-配置的通用形态)）。三件套如下：
+
+- `command`：**`node` 的绝对路径**（项目官方示例里写的是裸 `node`，但 MCP 子进程的环境可能不含 PATH，**建议写绝对路径**）
+- `args`：构建产物 `dist\index.js` 的绝对路径
+- `env`：`BCOMP_PATH`（**非默认安装位置时必设**）
+
+**Claude Desktop**（`claude_desktop_config.json`）与 **Claude Code**（`~/.claude/.mcp.json`）——项目官方给的格式：
+
+```json
+{
+  "mcpServers": {
+    "beyondcompare-mcp": {
+      "command": "<Node 安装目录>\\node.exe",
+      "args": ["<MCP 根目录>\\beyondcompare-mcp\\dist\\index.js"],
+      "env": { "BCOMP_PATH": "<Beyond Compare 安装目录>\\BComp.com" }
+    }
+  }
+}
+```
+
+**VS Code**（`.vscode/mcp.json`）——**注意顶层键是 `servers` 而不是 `mcpServers`**：
+
+```json
+{
+  "servers": {
+    "beyondcompare-mcp": {
+      "command": "<Node 安装目录>\\node.exe",
+      "args": ["<MCP 根目录>\\beyondcompare-mcp\\dist\\index.js"],
+      "env": { "BCOMP_PATH": "<Beyond Compare 安装目录>\\BComp.com" }
+    }
+  }
+}
+```
+
+**Cursor**：`Settings → MCP → Add new MCP server`，或编辑 `%USERPROFILE%\.cursor\mcp.json`，结构同上面的 `mcpServers`。
+
+---
+
+## 7. 工具一览（5 个）
 
 | 工具 | 用途 |
 |---|---|
@@ -136,7 +176,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `sync_folders` | 目录同步：`mode`（update 非破坏性 / mirror 镜像可能删除）、`direction`（left->right / right->left / all）、**`dryRun` 预览** |
 | `run_script` | 执行 Beyond Compare 脚本文件，做批量比较/同步/合并 |
 
-### 6.1 退出码语义（判定等级的依据）
+### 7.1 退出码语义（判定等级的依据）
 
 Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了完整映射：
 
@@ -158,7 +198,7 @@ Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了�
 
 ---
 
-## 7. 为什么用这个项目，而不用另一个（实测对比）
+## 8. 为什么用这个项目，而不用另一个（实测对比）
 
 本机曾同时评估两个同名项目，结论基于实测而非文档：
 
@@ -175,9 +215,9 @@ Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了�
 
 ---
 
-## 8. 本服务专属注意事项
+## 9. 本服务专属注意事项
 
-### 8.1 关于试用版 / 未激活许可：不影响使用
+### 9.1 关于试用版 / 未激活许可：不影响使用
 
 本机在**试用状态下**完成了全部验证（7 次调用，含文件夹比较、脚本执行、三方合并），结论：
 
@@ -186,7 +226,7 @@ Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了�
 - **有超时兜底**：`executeBComp` 默认 60 秒、脚本执行 120 秒超时，即使真卡住也只会返回超时错误，不会挂死服务器。
 - **"定期重置试用"不影响本服务配置**——重置的是许可状态，与 `BCOMP_PATH`、工具调用无关。
 
-### 8.2 已修复的缺陷：文件夹报告的"仅一侧存在"被误判为差异（本机修复）
+### 9.2 已修复的缺陷：文件夹报告的"仅一侧存在"被误判为差异（本机修复）
 
 **症状**：`compare_folders` 的汇总行把「仅存在于一侧」的文件计入 `different`，且 `left-only` / `right-only` 恒为 0。明细行本身正确，但汇总数字会误导（做同步前按汇总判断会高估差异量）。
 
@@ -228,7 +268,7 @@ Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了�
 > 改动文件：`src/report.ts`、`tests/report.test.ts`；改动前的备份为同目录 `.bak-before-ltonly-fix`，便于回滚。
 > 本项目未提交上游，属本机修改——**升级上游时注意这几处会被覆盖**。
 
-### 8.3 其他
+### 9.3 其他
 
 - **`merge_files` 报冲突（101）通常是正确行为**：BC 会把相邻修改视作同一 hunk，左右各改一行即构成冲突。重点是它**拒绝写出半成品文件**，退出码语义准确。
 - **`sync_folders` 用 `mirror` 模式可能删除目标侧文件**，执行前先用 `dryRun: true` 预览。
@@ -236,7 +276,7 @@ Beyond Compare 的退出码比"0=相同 / 1=不同"细得多，项目内置了�
 
 ---
 
-## 9. 更新与卸载
+## 10. 更新与卸载
 
 **更新**
 
